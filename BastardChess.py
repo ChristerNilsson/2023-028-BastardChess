@@ -1,8 +1,8 @@
 # TODO
 
-# Spara till Github
-# Visa vem som är vid draget. Färgad cirkel
-# Gör visade drag valbara.
+# Visa initiala drag
+# Se över promovering
+# Dubbla bräden?
 
 import PySimpleGUI as sg
 import chess
@@ -11,9 +11,10 @@ import chess.engine
 import pyperclip
 import subprocess
 
-URVAL = "123" # Första index är ett. Bästa tre dragen visas.
+URVAL = "234" # Första index är ett. Bästa tre dragen visas förutom det bästa.
 SECONDS = 0.1 # thinking time
 ORDER = 'Alfa'
+PROMO = 'Dam'
 BROWSER = "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
 
 finalized = False
@@ -68,16 +69,21 @@ def redraw_board(window, board):
 			elem.Update(button_color=('white', color), image_filename=piece_image, image_size=(75, 75), image_subsample=2, )
 
 def clues(engine,board):
+	global SECONDS, URVAL, ORDER, PROMO
 	if not finalized: return []
 	SECONDS = window['_seconds_'].get()
 	URVAL = window['_urval_'].get()
 	maximum = int(URVAL[-1])
 	ORDER = window['_order_'].get()
+	PROMO = window['_promo_'].get()
+
 	info = engine.analyse(board, chess.engine.Limit(time=SECONDS), multipv=maximum)
+	n = len(info)
 	best_moves = []
 	for ch in URVAL:
 		i = int(ch)-1
-		best_moves.append(' ' + board.san(info[i]['pv'][0]))
+		if len(best_moves) < n:
+			best_moves.append(board.san(info[i]['pv'][0]))
 	if ORDER == 'Alfa':
 		best_moves.sort()
 	return best_moves
@@ -98,16 +104,27 @@ def PlayGame():
 	engine = chess.engine.SimpleEngine.popen_uci(filename)
 	board = chess.Board()
 
+	a = sg.Text('Sortering')
+	b = sg.Combo(['Alfa','Styrka'], size=(10, 2), readonly=True, default_value=ORDER, key='_order_')
+	c = sg.Column([[a,b]])
+	d = sg.Text('Sekunder')
+	e = sg.Combo([0.001,0.01,0.1,1], size=(10, 4), readonly=True, default_value=SECONDS, key='_seconds_')
+	f = sg.Column([[d,e]])
+	g = sg.Text('Ledtrådar')
+	h = sg.Combo('123 1234 12345 234 2345 23456'.split(' '), size=(10, 6), readonly=True, default_value=URVAL, key='_urval_')
+	k = sg.Column([[g,h]])
+	p1 = sg.Text('Promovering')
+	p2 = sg.Combo('Dam Torn Löpare Springare'.split(' '), size=(10, 4), readonly=True, default_value=PROMO, key='_promo_')
+	p3 = sg.Column([[p1,p2]])
 	board_controls = [
-		[sg.Text('Sortering')],
-		[sg.Combo(['Alfa','Styrka'], size=(10, 2), readonly=True, default_value=ORDER, key='_order_')],
-		[sg.Text('Sekunder')],
-		[sg.Combo([0.001,0.01,0.1,1], size=(10, 4), readonly=True, default_value=SECONDS, key='_seconds_')],
-		[sg.Text('Ledtrådar')],
-		[sg.Combo(['123','234','357'], size=(10, 4), readonly=True, default_value=URVAL, key='_urval_')],
-		[sg.Text('\n'.join(clues(engine,board)), size=(10, 3), text_color='black', background_color='white', key='suggestions'),],
+		[c],
+		[f],
+		[p3],
+		[k],
+		[sg.Text(' '.join(clues(engine,board)), size=(22, 2),  key='_clues_'),],
 		[sg.Text('Historik')],
-		[sg.Text('', size=(10, 3), text_color='black', background_color='white', key='_historik_')],
+		[sg.Table(values = [], headings=['Nr',' White ',' Black '],size=(10,10),key='_historik_',justification = "center", hide_vertical_scroll=True)],
+
 		[sg.Button('Hjälp')],
 		[sg.Button('Analys')],
 		[sg.Button('Nytt parti')],
@@ -119,6 +136,7 @@ def PlayGame():
 	window = sg.Window('Bastardschack',
 	default_button_element_size=(10, 1),
 	auto_size_buttons=False,
+	font='Arial 12',
 	icon='kingb.ico').Layout(layout)
 
 	while not board.is_game_over():
@@ -126,7 +144,7 @@ def PlayGame():
 		SECONDS = window['_seconds_']
 
 		if finalized:
-			window['suggestions'].Update('\n'.join(clues(engine, board)))
+			window['_clues_'].Update(' '.join(clues(engine, board)))
 
 		move_state = 0
 		while True:
@@ -139,7 +157,7 @@ def PlayGame():
 			if button == 'Nytt parti':
 				board = chess.Board()
 				stack = []
-				window['suggestions'].Update('')
+				window['_clues_'].Update('')
 				window['_historik_'].Update('')
 				redraw_board(window,board)
 			if button == 'Hjälp':
@@ -155,13 +173,14 @@ def PlayGame():
 
 					b = [row.split(' ') for row in str(board).split("\n")]
 					piece = b[row][col]
-
-					button_square = window[(row, col)]
-					button_square.Update(button_color=('white', 'red'))
-					move_state = 1
+					if piece in 'kqrbnp' and len(board.move_stack)%2==1 or piece in 'KQRBNP' and len(board.move_stack)%2==0:
+						button_square = window[(button[0], button[1])]
+						button_square.Update(button_color=('white', 'red'))
+						move_state = 1
 				elif move_state == 1:
 					move_to = button
 					row, col = move_to
+
 					if move_to == move_from:  # cancelled move
 						color = '#B58863' if (row + col) % 2 else '#F0D9B5'
 						button_square.Update(button_color=('white', color))
@@ -171,18 +190,19 @@ def PlayGame():
 					picked_move = '{}{}{}{}'.format('abcdefgh'[move_from[1]], 8 - move_from[0],
 													'abcdefgh'[move_to[1]], 8 - move_to[0])
 
-					if piece == 'P' and 8 - move_to[0] == 8: picked_move += 'q'
-					if piece == 'p' and 8 - move_to[0] == 1: picked_move += 'q'
+					if (piece == 'P' and 8 - move_to[0] == 8) or (piece == 'p' and 8 - move_to[0] == 1):
+						picked_move += {'Dam':'q','Torn':'r','Löpare':'b','Springare':'n'}[PROMO]
 
 					if picked_move in [str(move) for move in board.legal_moves]:
 						stack.append(board.san(chess.Move.from_uci(picked_move)))
 						pgn = []
+						pgnpc = []
 						for i in range(0,len(stack),2):
-							t = str(i//2+1) + ". " + stack[i]
-							if i+1 < len(stack): t += ' ' + stack[i + 1]
+							t = [str(i // 2 + 1), stack[i]]
+							if i+1 < len(stack): t.append(stack[i + 1])
 							pgn.append(t)
-						pyperclip.copy("\n".join(pgn))
-
+							pgnpc.append(' '.join(t))
+						pyperclip.copy("\n".join(pgnpc))
 						board.push(chess.Move.from_uci(picked_move))
 					else:
 						move_state = 0
@@ -192,7 +212,7 @@ def PlayGame():
 
 					redraw_board(window, board)
 
-					window['_historik_'].Update('\n'.join(pgn))
+					window['_historik_'].Update(pgn)
 					finalized = True
 
 					break
