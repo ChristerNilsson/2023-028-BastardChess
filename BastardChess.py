@@ -1,7 +1,5 @@
 # TODO
 
-# Undo
-
 import PySimpleGUI as sg
 import chess
 import chess.pgn
