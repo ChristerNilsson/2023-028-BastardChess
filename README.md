@@ -2,7 +2,8 @@
 
 Det unika med BastardChess är att man får reda på några av de bästa dragen innan man drar.  
 Detta är alltså en slags hybrid av hybridschack.  
-Meningen är att nya spelare snabbare ska få en känsla för vilka drag som är lämpliga.  Genom att utelämna det bästa draget, uppmuntras man att leta efter det.
+Meningen är att nya spelare snabbare ska få en känsla för vilka drag som är lämpliga.  
+Genom att det bästa draget utelämnats, uppmuntras man att leta efter det.
 
 # Sortering
 
