@@ -16,6 +16,7 @@ SECONDS = 0.1 # thinking time
 ORDER = 'Alfa'
 PROMO = 'Dam'
 BROWSER = "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+HELP = "https://github.com/ChristerNilsson/2023-028-BastardChess#bastardchess"
 
 finalized = False
 stack = [] # san moves for gui
@@ -161,7 +162,7 @@ def PlayGame():
 				window['_historik_'].Update('')
 				redraw_board(window,board)
 			if button == 'Hjälp':
-				subprocess.Popen([BROWSER ,"https:\\lichess.org\paste"])
+				subprocess.Popen([BROWSER ,HELP])
 				break
 			if button == 'Analys':
 				subprocess.Popen([BROWSER ,"https:\\lichess.org\paste"])

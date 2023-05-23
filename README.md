@@ -2,6 +2,7 @@
 
 Det unika med BastardChess är att man får reda på några av de bästa dragen innan man drar.  
 Detta är alltså en slags hybrid av hybridschack.  
+Meningen är att nya spelare snabbare ska få en känsla för vilka drag som är lämpliga.  Genom att utelämna det bästa draget, uppmuntras man att leta efter det.
 
 # Sortering
 
@@ -18,12 +19,14 @@ Här anges vilken pjäs bonden ska förvandlas till.
 
 # Ledtrådar
 
-* 123 Man får se de tre bästa dragen
+* 123
 * 1234
 * 12345
-* 234 (rekommenderas)
+* 234: Man får se de tre starkaste dragen förutom det bästa.
 * 2345
-* 23456 Man får se de fem bästa dragen förutom det allra bästa
+* 23456
+
+Tänk på att Stockfish inte är perfekt. Stockfish väljer inte samma drag varje gång. Dessutom påverkas dragens kvalitet av hur lång tid som används. 
 
 # Analys
 
