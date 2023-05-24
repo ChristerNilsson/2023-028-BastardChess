@@ -10,7 +10,7 @@ import subprocess
 ENGINE = "C:/github/2023-018-Python-Chess_Evaluate/stockfish15/stockfish-windows-2022-x86-64-modern.exe"
 BROWSER = "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
 HELP = "https://github.com/ChristerNilsson/2023-028-BastardChess#bastardchess"
-HEADER = ' Nr|  Vit  | Svart '.split('|')
+HEADER = ' Nr|  Vit  | Svart |  w |  b '.split('|')
 
 CLUES = '0 123 1234 12345 234 2345 23456'.split(' ')
 CLUE = "234" # Första index är ett. Bästa tre dragen visas förutom det bästa.
@@ -26,6 +26,10 @@ PROMO = 'Dam'
 
 finalized = False
 stack = [] # san moves for gui
+mobility = []
+scores = []
+
+info = []
 
 BLANK = 0
 
@@ -65,18 +69,37 @@ def hor(a,b): return [sg.Column([[a,b]])]
 def makeHistory():
 	pgn = []
 	pgnpc = []
-	for i in range(0, len(stack), 2):
-		t = [str(i // 2 + 1), stack[i]]
-		if i + 1 < len(stack): t.append(stack[i + 1])
-		pgn.append(t)
+	n = len(stack)
+	for i in range(0,n,2):
+		t = [str(i//2+1), stack[i]]
+		if i + 1 < n:
+			t.append(stack[i + 1])
+		else:
+			t.append('')
 		pgnpc.append(' '.join(t))
+		t.append(scores[i])
+		if i + 1 < n:
+			t.append(scores[i + 1])
+		else:
+			t.append('')
+		pgn.append(t.copy())
 	pyperclip.copy("\n".join(pgnpc))
 	return pgn
 
+def material(board):
+	res = 0
+	hash = {'.':0,'k':0,'r':-5,'q':-9,'b':-3,'n':-3,'p':-1,'K':0,'R':5,'Q':9,'B':3,'N':3,'P':1}
+	b = [row.split(' ') for row in str(board).split("\n")]
+	for i in range(8):
+		for j in range(8):
+			res += hash[b[i][j]]
+	return res
+
 def PlayGame():
-	global window, ORDER, TIME, CLUE, PROMO, finalized, stack
+	global window, ORDER, TIME, CLUE, PROMO, finalized, stack, scores
 
 	def clues(engine, board):
+		global info
 		maximum = int(CLUE[-1])
 		if maximum == 0: return []
 		info = engine.analyse(board, chess.engine.Limit(time=TIME / 1000), multipv=maximum)
@@ -84,7 +107,7 @@ def PlayGame():
 		best_moves = []
 		for ch in CLUE:
 			i = int(ch) - 1
-			if len(best_moves) < n:
+			if i < n:
 				best_moves.append(board.san(info[i]['pv'][0]))
 		if ORDER == 'Alfabetisk': best_moves.sort()
 		return best_moves
@@ -132,7 +155,10 @@ def PlayGame():
 		[sg.Button('Avsluta')]
 	]
 
-	layout = [[sg.Column(board_layout), sg.Column(board_controls)]]
+	row = [sg.Text('Material: 0', key='_material_'), sg.Text('Mobilitet: 20', key='_mobilitet_')]
+	board_layout.append(row)
+
+	layout = [[ sg.Column(board_layout), sg.Column(board_controls)]]
 
 	window = sg.Window('Bastardschack',
 	default_button_element_size=(10, 1),
@@ -140,8 +166,8 @@ def PlayGame():
 	font='Arial 16',
 	icon='kingb.ico').Layout(layout)
 
-	while not board.is_game_over():
-		if finalized:
+	while True:
+		if finalized and not board.is_game_over():
 			window['_clues_'].Update(' '.join(clues(engine, board)))
 
 		move_state = 0
@@ -161,6 +187,7 @@ def PlayGame():
 			if button == 'Nytt parti':
 				board = chess.Board()
 				stack = []
+				scores = []
 				window['_clues_'].Update(' '.join(clues(engine,board)))
 				window['_historik_'].Update('')
 				redraw_board(window,board)
@@ -174,10 +201,10 @@ def PlayGame():
 				if len(stack) == 0: break
 				board.pop()
 				stack.pop()
+				scores.pop()
 				redraw_board(window,board)
 				pgn = makeHistory()
 				window['_historik_'].Update(pgn[-10:])
-				# print(len(board.move_stack),len(stack))
 				break
 			if type(button) is tuple: # en av 64 rutor
 				if move_state == 0:
@@ -209,8 +236,20 @@ def PlayGame():
 
 					if picked_move in [str(move) for move in board.legal_moves]:
 						stack.append(board.san(chess.Move.from_uci(picked_move)))
-						pgn = makeHistory()
 						board.push(chess.Move.from_uci(picked_move))
+
+						info = engine.analyse(board, chess.engine.Limit(time=TIME / 1000))
+
+						color = [False,True][len(scores) % 2]
+						factor = [-1,1][len(scores) % 2]
+						value = info['score'].pov(color)
+						if type(value) == chess.engine.Cp:
+							scores.append(round(value.cp * factor/10))
+						else:
+							scores.append('#' + str(value.mate() * factor))
+						pgn = makeHistory()
+						window['_material_'].Update('Material: ' + str(material(board)))
+						window['_mobilitet_'].Update('Mobilitet: ' + str(board.legal_moves.count()))
 					else:
 						move_state = 0
 						color = '#B58863' if (move_from[0] + move_from[1]) % 2 else '#F0D9B5'
@@ -220,7 +259,6 @@ def PlayGame():
 					redraw_board(window, board)
 					window['_historik_'].Update(pgn[-10:])
 					finalized = True
-
 					break
 
 PlayGame()

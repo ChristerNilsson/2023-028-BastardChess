@@ -31,17 +31,30 @@ Här anges vilken pjäs bonden ska förvandlas till.
 # Ledtrådar
 
 * 0: Inga ledtrådar
-* 123: De tre starkast dragen
+* 123: De tre starkaste dragen
 * 1234
 * 12345
-* 234: Man ser de tre starkaste dragen förutom det bästa.
+* 234: De tre starkaste dragen förutom det bästa.
 * 2345
 * 23456
 
+# Material
+
+* Baserat på pjäsernas värde (1,3,5,9).
+* Beräknas som Vit minus Svart.
+
+# Mobilitet
+
+* Antal drag som aktuell spelare kan utföra.
+
+# Historik
+
+* Här visas de tio senaste dragen samt deras utvärdering i decipawns.
+
 # Analys
 
-Dragen kopieras till klippbordet och man skickas till Lichess.  
-Där klistrar man in partiet och kan sedan analysera.  
+* Dragen kopieras till klippbordet och man skickas till Lichess.  
+* Där klistrar man in partiet och kan sedan analysera.  
 
 # Nytt parti
 
@@ -62,5 +75,5 @@ Efter tillstånd av motståndaren.
 # Varför finns inte detta program i närmaste browser?
 
 * För att få prestanda mha Stockfish, vill man köra C++-versionen.
-* Det finns en javascriptversion av Stockfish, men den är komplicerad att använda.
+* Det finns en javascriptversion av Stockfish, men den är komplicerad samt långsammare.
 * När Web Assembly blir standard i browsern, kan detta program flyttas dit.
