@@ -10,13 +10,13 @@ import subprocess
 ENGINE = "C:/github/2023-018-Python-Chess_Evaluate/stockfish15/stockfish-windows-2022-x86-64-modern.exe"
 BROWSER = "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
 HELP = "https://github.com/ChristerNilsson/2023-028-BastardChess#bastardchess"
-HEADER = ' Nr|  Vit  | Svart |  w |  b '.split('|')
+HEADER = ' Nr |  Vit  | Svart |  w |  b '.split('|')
 
 CLUES = '0 123 1234 12345 234 2345 23456'.split(' ')
 CLUE = "234" # Första index är ett. Bästa tre dragen visas förutom det bästa.
 
-TIMES = [10,20,50,100,200,500,1000,2000] # milliseconds
-TIME = 200 # thinking time
+TIMES = [10,20,50,100,200,500] # milliseconds
+TIME = 100 # thinking time
 
 ORDERS = 'Alfabetisk Styrka'.split(' ')
 ORDER = 'Alfabetisk'
@@ -168,7 +168,7 @@ def PlayGame():
 
 	while True:
 		if finalized and not board.is_game_over():
-			window['_clues_'].Update(' '.join(clues(engine, board)))
+			window['_clues_'].Update(' '.join(clues(engine, board)), text_color=['white','black'][len(stack)%2])
 
 		move_state = 0
 		while True:
