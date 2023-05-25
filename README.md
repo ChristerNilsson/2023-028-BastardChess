@@ -1,24 +1,19 @@
 # BastardChess
 
 * Det unika med BastardChess är att man får reda på några av de bästa dragen innan man gör sitt drag.  
-* Detta är alltså en slags hybrid av hybridschack.  
-* Meningen är att nya spelare snabbare ska få en känsla för vilka drag som är lämpliga.  
-* Genom att det bästa draget utelämnas, uppmuntras man att leta efter det.  
-* Hittar man inte det bästa draget, får man försöka välja det bästa draget av de föreslagna.  
-* Tänk på att motståndaren har tillgång till samma information.  
+* Detta är alltså en slags hybrid av hybridschack.
+* Meningen är att nya spelare snabbare ska få en känsla för vilka drag som är lämpliga.
+* Genom att det bästa draget utelämnas, uppmuntras man att leta efter det.
+* Hittar man inte det bästa draget, får man försöka välja det bästa draget av de föreslagna.
+* Tänk på att motståndaren har tillgång till samma information.
 
 # Stockfish är inte perfekt
 
-* Framförallt är utvärdering av spelöppningar en svag punkt.  
-* Att spelöppningar är vanliga medför inte automatiskt att de är bra.  
-* T ex spelas alla tjugo möjliga öppningsdrag varje månad av mästare på Lichess.  
-* Stockfish väljer inte samma drag varje gång.  
-* Dessutom påverkas dragens kvalitet av hur lång tid som används.  
-
-# Sortering
-
-* Alfa: alfabetisk sortering (rekommenderas)
-* Styrka: starkaste draget först
+* Framförallt är utvärdering av spelöppningar en svag punkt.
+* Att spelöppningar är vanliga medför inte automatiskt att de är bra.
+* T ex spelas alla tjugo möjliga öppningsdrag varje månad av mästare på Lichess.
+* Stockfish väljer inte samma drag varje gång.
+* Dessutom påverkas dragens kvalitet av hur lång tid som används.
 
 # Millisekunder
 
@@ -30,13 +25,14 @@ Här anges vilken pjäs bonden ska förvandlas till.
 
 # Ledtrådar
 
+1 = Bästa draget
+2 = Näst bästa osv.
+
 * 0: Inga ledtrådar
-* 123: De tre starkaste dragen
-* 1234
-* 12345
-* 234: De tre starkaste dragen förutom det bästa.
-* 2345
-* 23456
+* 2:     1=Grönt 2  =Gult 3-=Rött
+* 3-4: 1-2=Grönt 3-4=Gult 5-=Rött
+* 4-6
+* 5-8
 
 # Material
 
@@ -49,7 +45,7 @@ Här anges vilken pjäs bonden ska förvandlas till.
 
 # Historik
 
-* Här visas de tio senaste dragen samt deras utvärdering i decipawns.
+* Här visas de tio senaste dragen. Färgerna visa dragets styrka.
 
 # Analys
 
