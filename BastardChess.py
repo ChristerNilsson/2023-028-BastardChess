@@ -12,11 +12,13 @@ BROWSER = "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
 HELP = "https://github.com/ChristerNilsson/2023-028-BastardChess#bastardchess"
 HEADER = ' Nr |  Vit  | Svart |  w |  b '.split('|')
 
-CLUES = '0 123 1234 12345 234 2345 23456'.split(' ')
-CLUE = "234" # Första index är ett. Bästa tre dragen visas förutom det bästa.
+CLUES = '0 2 3-4 4-6 5-8'.split(' ')
+CLUE = "3-4" # green:1-2 yellow:3-4 red:5-
+LOW = 2
+HIGH = 4
 
-TIMES = [10,20,50,100,200,500] # milliseconds
-TIME = 100 # thinking time
+TIMES = [1,2,5,10,20,50,100,200,500] # milliseconds
+TIME = 10 # thinking time
 
 ORDERS = 'Alfabetisk Styrka'.split(' ')
 ORDER = 'Alfabetisk'
@@ -25,9 +27,8 @@ PROMOS = 'Dam Torn Löpare Springare'.split(' ')
 PROMO = 'Dam'
 
 finalized = False
-stack = [] # san moves for gui
+stack = [] # [san, color]
 mobility = []
-scores = []
 
 info = []
 
@@ -68,31 +69,24 @@ def hor(a,b): return [sg.Column([[a,b]])]
 
 def makeRow(index,n):
 	res = []
+	sizes = [3,6,6]
 	for i in range(n):
 		s = str(index)+str(i)
-		cell = sg.Text(s, key=s)
+		cell = sg.Text('', key=s, size=sizes[i], background_color='black', p=(0,0))
 		res.append(cell)
 	return [sg.Column([res])]
 
 def makeHistory():
 	pgn = []
-	pgnpc = []
 	n = len(stack)
 	for i in range(0,n,2):
-		t = [str(i//2+1), stack[i]]
+		t = [str(i//2+1), stack[i][0]]
 		if i + 1 < n:
-			t.append(stack[i + 1])
+			t.append(stack[i + 1][0])
 		else:
 			t.append('')
-		#pgnpc.append(' '.join(t))
-		t.append(scores[i])
-		if i + 1 < n:
-			t.append(scores[i + 1])
-		else:
-			t.append('')
-		pgn.append(t.copy())
-	pyperclip.copy("\n".join(pgnpc))
-	return pgn
+		pgn.append(' '.join(t))
+	pyperclip.copy("\n".join(pgn))
 
 def material(board):
 	res = 0
@@ -103,8 +97,39 @@ def material(board):
 			res += hash[b[i][j]]
 	return res
 
+def getScore(engine,board):
+	color = [False, True][len(stack) % 2]
+	factor = [-1, 1][len(stack) % 2]
+	info = engine.analyse(board, chess.engine.Limit(time=TIME / 1000))
+	value = info['score'].pov(color)
+	if type(value) == chess.engine.Cp:
+		score = round(value.cp * factor/10)
+	else:
+		score = '#' + str(value.mate() * factor)
+	return score
+
+def showStack():
+	n = min(len(stack),20)
+	start = len(stack) - n
+	if start % 2 == 1: start = start + 1
+	if start < 0: start = 0
+
+	for i in range(20):
+		row = i // 2
+		col = i % 2
+		window[str(row) + str(col + 0)].Update('')
+		window[str(row) + str(col + 1)].Update('')
+
+	for i in range(n):
+		row = i // 2
+		col = i % 2
+		if start+i < len(stack):
+			[san,color] = stack[start+i]
+			if col==0: window[str(row) + str(col)].Update(start//2 + row + 1)  # nr
+			window[str(row) + str(col+1)].Update(san, text_color=color)
+
 def PlayGame():
-	global window, ORDER, TIME, CLUE, PROMO, finalized, stack, scores
+	global window, ORDER, TIME, CLUE, PROMO, finalized, stack
 
 	def clues(engine, board):
 		global info
@@ -113,11 +138,13 @@ def PlayGame():
 		info = engine.analyse(board, chess.engine.Limit(time=TIME / 1000), multipv=maximum)
 		n = len(info)
 		best_moves = []
-		for ch in CLUE:
-			i = int(ch) - 1
+
+		for i in range(LOW,HIGH+1):
 			if i < n:
 				best_moves.append(board.san(info[i]['pv'][0]))
+
 		if ORDER == 'Alfabetisk': best_moves.sort()
+		if n>0: print(board.san(info[0]['pv'][0]))
 		return best_moves
 
 	b = [row.split(' ') for row in str(initial_board).split("\n")]
@@ -132,8 +159,8 @@ def PlayGame():
 	engine = chess.engine.SimpleEngine.popen_uci(ENGINE)
 	board = chess.Board()
 
-	a = sg.Text('Sortering')
-	b = sg.Combo(ORDERS, size=(10, 10), readonly=True, default_value=ORDER, key='_order_')
+	# a = sg.Text('Sortering')
+	# b = sg.Combo(ORDERS, size=(10, 10), readonly=True, default_value=ORDER, key='_order_')
 
 	d = sg.Text('Millisekunder')
 	e = sg.Combo(TIMES, size=(8, 10), readonly=True, default_value=TIME, key='_TIME_')
@@ -151,23 +178,25 @@ def PlayGame():
 	r2 = sg.Button('Nytt parti')
 
 	board_controls = [
-		hor(a,b),
+		# hor(a,b),
 		hor(d,e),
 		hor(p1,p2),
 		hor(g,h),
 		[sg.Text(' '.join(clues(engine,board)), size=(22, 2),  key='_clues_'),],
 		[sg.Text('Tio senaste dragen')],
-		makeRow(0,5),
-		makeRow(1,5),
-		makeRow(2,5),
-		makeRow(3,5),
-		makeRow(4,5),
-		makeRow(5,5),
-		makeRow(6,5),
-		makeRow(7,5),
-		makeRow(8,5),
-		makeRow(9,5),
-		# [sg.Table(values = [], headings=HEADER,size=(10,10),key='_historik_',justification = "center", num_rows=10, hide_vertical_scroll=True)],
+		[sg.Column([
+			makeRow(0, 3),
+			makeRow(1, 3),
+			makeRow(2, 3),
+			makeRow(3, 3),
+			makeRow(4, 3),
+			makeRow(5, 3),
+			makeRow(6, 3),
+			makeRow(7, 3),
+			makeRow(8, 3),
+			makeRow(9, 3),
+			],background_color='black'
+		)],
 		hor(q1,q2),
 		hor(r1,r2),
 		[sg.Button('Avsluta')]
@@ -192,7 +221,7 @@ def PlayGame():
 		while True:
 			button, value = window.Read()
 
-			ORDER = value['_order_']
+			#ORDER = value['_order_']
 			TIME = value['_TIME_']
 			PROMO = value['_promo_']
 			CLUE = value['_clue_']
@@ -205,24 +234,28 @@ def PlayGame():
 			if button == 'Nytt parti':
 				board = chess.Board()
 				stack = []
-				scores = []
 				window['_clues_'].Update(' '.join(clues(engine,board)))
-				window['_historik_'].Update('')
+
+				for i in range(20):
+					row = i // 2
+					col = i % 2
+					window[str(row) + str(col + 0)].Update('')
+					window[str(row) + str(col + 1)].Update('')
+
 				redraw_board(window,board)
 			if button == 'Hjälp':
 				subprocess.Popen([BROWSER ,HELP])
 				break
 			if button == 'Analys':
+				makeHistory()
 				subprocess.Popen([BROWSER ,"https:\\lichess.org\paste"])
 				break
 			if button == 'Ångra':
 				if len(stack) == 0: break
 				board.pop()
 				stack.pop()
-				scores.pop()
 				redraw_board(window,board)
-				pgn = makeHistory()
-				window['_historik_'].Update(pgn[-10:])
+				showStack()
 				break
 			if type(button) is tuple: # en av 64 rutor
 				if move_state == 0:
@@ -250,22 +283,21 @@ def PlayGame():
 
 					if (piece == 'P' and 8 - move_to[0] == 8) or (piece == 'p' and 8 - move_to[0] == 1):
 						picked_move += {'Dam':'q','Torn':'r','Löpare':'b','Springare':'n'}[PROMO]
-						print(picked_move)
 
 					if picked_move in [str(move) for move in board.legal_moves]:
-						stack.append(board.san(chess.Move.from_uci(picked_move)))
+						print(board.san(chess.Move.from_uci(picked_move)),getScore(engine,board))
+
+						index = 999
+						for i in range(len(info)):
+							if str(info[i]['pv'][0]) == picked_move: index = i
+
+						if index < LOW: color = 'green'
+						elif LOW <= index <= HIGH: color = 'yellow'
+						else: color = 'red'
+
+						stack.append([board.san(chess.Move.from_uci(picked_move)), color])
 						board.push(chess.Move.from_uci(picked_move))
 
-						info = engine.analyse(board, chess.engine.Limit(time=TIME / 1000))
-
-						color = [False,True][len(scores) % 2]
-						factor = [-1,1][len(scores) % 2]
-						value = info['score'].pov(color)
-						if type(value) == chess.engine.Cp:
-							scores.append(round(value.cp * factor/10))
-						else:
-							scores.append('#' + str(value.mate() * factor))
-						pgn = makeHistory()
 						window['_material_'].Update('Material: ' + str(material(board)))
 						window['_mobilitet_'].Update('Mobilitet: ' + str(board.legal_moves.count()))
 					else:
@@ -275,11 +307,7 @@ def PlayGame():
 						continue
 
 					redraw_board(window, board)
-					#window['_historik_'].row_colors = ((5, 'white', 'blue'), (0, 'red'), (15, 'yellow'))
-					#window['_historik_'].RowColors = ((5, 'white', 'blue'), (0, 'red'), (15, 'yellow'))
-					#window['_historik_'].Update(pgn[-10:],row_colors=((0, 'white', 'blue','red','green'), (1, 'red'), (15, 'yellow')) )
-
-					window['00'].Update("e4", text_color='yellow')
+					showStack()
 
 					finalized = True
 					break
