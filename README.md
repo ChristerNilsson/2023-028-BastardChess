@@ -34,6 +34,10 @@ Här anges vilken pjäs bonden ska förvandlas till.
 * 4-6
 * 5-8
 
+Alternativet 3-4 innebär att man får reda på det tredje och fjärde bästa draget.
+1 och 2 är hemliga. Lyckas man hitta något av dem visas draget med grönt.
+Misslyckas man visas draget med rött.
+
 # Material
 
 * Baserat på pjäsernas värde (1,3,5,9).
