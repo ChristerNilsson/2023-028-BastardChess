@@ -66,6 +66,14 @@ def redraw_board(window, board):
 
 def hor(a,b): return [sg.Column([[a,b]])]
 
+def makeRow(index,n):
+	res = []
+	for i in range(n):
+		s = str(index)+str(i)
+		cell = sg.Text(s, key=s)
+		res.append(cell)
+	return [sg.Column([res])]
+
 def makeHistory():
 	pgn = []
 	pgnpc = []
@@ -76,7 +84,7 @@ def makeHistory():
 			t.append(stack[i + 1])
 		else:
 			t.append('')
-		pgnpc.append(' '.join(t))
+		#pgnpc.append(' '.join(t))
 		t.append(scores[i])
 		if i + 1 < n:
 			t.append(scores[i + 1])
@@ -149,7 +157,17 @@ def PlayGame():
 		hor(g,h),
 		[sg.Text(' '.join(clues(engine,board)), size=(22, 2),  key='_clues_'),],
 		[sg.Text('Tio senaste dragen')],
-		[sg.Table(values = [], headings=HEADER,size=(10,10),key='_historik_',justification = "center", num_rows=10, hide_vertical_scroll=True)],
+		makeRow(0,5),
+		makeRow(1,5),
+		makeRow(2,5),
+		makeRow(3,5),
+		makeRow(4,5),
+		makeRow(5,5),
+		makeRow(6,5),
+		makeRow(7,5),
+		makeRow(8,5),
+		makeRow(9,5),
+		# [sg.Table(values = [], headings=HEADER,size=(10,10),key='_historik_',justification = "center", num_rows=10, hide_vertical_scroll=True)],
 		hor(q1,q2),
 		hor(r1,r2),
 		[sg.Button('Avsluta')]
@@ -257,7 +275,12 @@ def PlayGame():
 						continue
 
 					redraw_board(window, board)
-					window['_historik_'].Update(pgn[-10:])
+					#window['_historik_'].row_colors = ((5, 'white', 'blue'), (0, 'red'), (15, 'yellow'))
+					#window['_historik_'].RowColors = ((5, 'white', 'blue'), (0, 'red'), (15, 'yellow'))
+					#window['_historik_'].Update(pgn[-10:],row_colors=((0, 'white', 'blue','red','green'), (1, 'red'), (15, 'yellow')) )
+
+					window['00'].Update("e4", text_color='yellow')
+
 					finalized = True
 					break
 
