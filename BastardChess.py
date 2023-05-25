@@ -10,24 +10,20 @@ import subprocess
 ENGINE = "C:/github/2023-018-Python-Chess_Evaluate/stockfish15/stockfish-windows-2022-x86-64-modern.exe"
 BROWSER = "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
 HELP = "https://github.com/ChristerNilsson/2023-028-BastardChess#bastardchess"
-HEADER = ' Nr |  Vit  | Svart |  w |  b '.split('|')
 
 CLUES = '0 2 3-4 4-6 5-8'.split(' ')
 CLUE = "3-4" # green:1-2 yellow:3-4 red:5-
-LOW = 2
+LOW = 3
 HIGH = 4
 
 TIMES = [1,2,5,10,20,50,100,200,500] # milliseconds
 TIME = 10 # thinking time
 
-ORDERS = 'Alfabetisk Styrka'.split(' ')
-ORDER = 'Alfabetisk'
-
 PROMOS = 'Dam Torn Löpare Springare'.split(' ')
 PROMO = 'Dam'
 
 finalized = False
-stack = [] # [san, color]
+stack = [] # [san, green/yellow/red]
 mobility = []
 
 info = []
@@ -103,7 +99,7 @@ def getScore(engine,board):
 	info = engine.analyse(board, chess.engine.Limit(time=TIME / 1000))
 	value = info['score'].pov(color)
 	if type(value) == chess.engine.Cp:
-		score = round(value.cp * factor/10)
+		score = value.cp * factor
 	else:
 		score = '#' + str(value.mate() * factor)
 	return score
@@ -128,24 +124,38 @@ def showStack():
 			if col==0: window[str(row) + str(col)].Update(start//2 + row + 1)  # nr
 			window[str(row) + str(col+1)].Update(san, text_color=color)
 
+def score(info):
+	color = [False, True][len(stack) % 2]
+	factor = [-1, 1][len(stack) % 2]
+	value = info['score'].pov(color)
+	if type(value) == chess.engine.Cp:
+		score = value.cp * factor
+	else:
+		score = 10000 - value.mate() * factor
+	return score
+
+def get_score(item): return -item[0]
+def get_san(item): return item[1]
+
+
 def PlayGame():
-	global window, ORDER, TIME, CLUE, PROMO, finalized, stack
+	global window, TIME, CLUE, PROMO, finalized, stack
 
 	def clues(engine, board):
-		global info
-		maximum = int(CLUE[-1])
-		if maximum == 0: return []
-		info = engine.analyse(board, chess.engine.Limit(time=TIME / 1000), multipv=maximum)
+		global info,LOW,HIGH
+		LOW = int(CLUE[0])
+		HIGH = int(CLUE[-1])
+		#print('LOW,HIGH: ',LOW,HIGH)
+		if HIGH == 0: return []
+		info = engine.analyse(board, chess.engine.Limit(time=TIME / 1000), multipv=HIGH)
 		n = len(info)
-		best_moves = []
 
-		for i in range(LOW,HIGH+1):
-			if i < n:
-				best_moves.append(board.san(info[i]['pv'][0]))
-
-		if ORDER == 'Alfabetisk': best_moves.sort()
-		if n>0: print(board.san(info[0]['pv'][0]))
-		return best_moves
+		best_moves = [[score(item),board.san(item['pv'][0])] for item in info]
+		best_moves.sort(key=get_score)
+		print(best_moves[0][1],best_moves[0][0])
+		best_moves = best_moves[LOW-1:n]
+		best_moves.sort(key=get_san)
+		return [move[1] for move in best_moves]
 
 	b = [row.split(' ') for row in str(initial_board).split("\n")]
 	board_layout = []
@@ -158,9 +168,6 @@ def PlayGame():
 
 	engine = chess.engine.SimpleEngine.popen_uci(ENGINE)
 	board = chess.Board()
-
-	# a = sg.Text('Sortering')
-	# b = sg.Combo(ORDERS, size=(10, 10), readonly=True, default_value=ORDER, key='_order_')
 
 	d = sg.Text('Millisekunder')
 	e = sg.Combo(TIMES, size=(8, 10), readonly=True, default_value=TIME, key='_TIME_')
@@ -178,7 +185,6 @@ def PlayGame():
 	r2 = sg.Button('Nytt parti')
 
 	board_controls = [
-		# hor(a,b),
 		hor(d,e),
 		hor(p1,p2),
 		hor(g,h),
@@ -202,7 +208,7 @@ def PlayGame():
 		[sg.Button('Avsluta')]
 	]
 
-	row = [sg.Text('Material: 0', key='_material_'), sg.Text('Mobilitet: 20', key='_mobilitet_')]
+	row = [sg.Text('Material: 0', key='_material_'), sg.Text('Mobilitet: 20', key='_mobilitet_'), sg.Text('Utvärdering: 0', key='_evaluation_')]
 	board_layout.append(row)
 
 	layout = [[ sg.Column(board_layout), sg.Column(board_controls)]]
@@ -221,7 +227,6 @@ def PlayGame():
 		while True:
 			button, value = window.Read()
 
-			#ORDER = value['_order_']
 			TIME = value['_TIME_']
 			PROMO = value['_promo_']
 			CLUE = value['_clue_']
@@ -235,6 +240,9 @@ def PlayGame():
 				board = chess.Board()
 				stack = []
 				window['_clues_'].Update(' '.join(clues(engine,board)))
+				window['_material_'].Update('Material: 0')
+				window['_mobilitet_'].Update('Mobilitet: 20')
+				window['_evaluation_'].Update('Utvärdering: 0')
 
 				for i in range(20):
 					row = i // 2
@@ -285,7 +293,8 @@ def PlayGame():
 						picked_move += {'Dam':'q','Torn':'r','Löpare':'b','Springare':'n'}[PROMO]
 
 					if picked_move in [str(move) for move in board.legal_moves]:
-						print(board.san(chess.Move.from_uci(picked_move)),getScore(engine,board))
+						scorex = getScore(engine,board)
+						print(board.san(chess.Move.from_uci(picked_move)),scorex)
 
 						index = 999
 						for i in range(len(info)):
@@ -300,6 +309,7 @@ def PlayGame():
 
 						window['_material_'].Update('Material: ' + str(material(board)))
 						window['_mobilitet_'].Update('Mobilitet: ' + str(board.legal_moves.count()))
+						window['_evaluation_'].Update('Utvärdering: ' + str(scorex))
 					else:
 						move_state = 0
 						color = '#B58863' if (move_from[0] + move_from[1]) % 2 else '#F0D9B5'
