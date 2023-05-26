@@ -17,7 +17,7 @@
 
 # Millisekunder
 
-Här anger man hur mycket tid som ska användas för att utvärdera dragen.
+Här anger man hur mycket tid som används för att utvärdera dragen.
 
 # Promovering
 

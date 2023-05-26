@@ -65,7 +65,7 @@ def hor(a,b): return [sg.Column([[a,b]])]
 
 def makeRow(index,n):
 	res = []
-	sizes = [3,6,6]
+	sizes = [4,7,7]
 	for i in range(n):
 		s = str(index)+str(i)
 		cell = sg.Text('', key=s, size=sizes[i], background_color='black', p=(0,0))
