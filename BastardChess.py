@@ -27,6 +27,7 @@ stack = [] # [san, green/yellow/red]
 mobility = []
 
 info = []
+best_moves = []
 
 BLANK = 0
 
@@ -139,23 +140,23 @@ def get_san(item): return item[1]
 
 
 def PlayGame():
-	global window, TIME, CLUE, PROMO, finalized, stack
+	global window, TIME, CLUE, PROMO, finalized, stack, best_moves
 
 	def clues(engine, board):
-		global info,LOW,HIGH
+		global info,LOW,HIGH,best_moves
 		LOW = int(CLUE[0])
 		HIGH = int(CLUE[-1])
-		#print('LOW,HIGH: ',LOW,HIGH)
 		if HIGH == 0: return []
 		info = engine.analyse(board, chess.engine.Limit(time=TIME / 1000), multipv=HIGH)
 		n = len(info)
+		print([item['time'] for item in info])
 
 		best_moves = [[score(item),board.san(item['pv'][0])] for item in info]
 		best_moves.sort(key=get_score)
-		print(best_moves[0][1],best_moves[0][0])
-		best_moves = best_moves[LOW-1:n]
-		best_moves.sort(key=get_san)
-		return [move[1] for move in best_moves]
+		print('best',best_moves[0][1])
+		yellow_moves = best_moves[LOW-1:n]
+		yellow_moves.sort(key=get_san)
+		return [move[1] for move in yellow_moves]
 
 	b = [row.split(' ') for row in str(initial_board).split("\n")]
 	board_layout = []
@@ -188,7 +189,7 @@ def PlayGame():
 		hor(d,e),
 		hor(p1,p2),
 		hor(g,h),
-		[sg.Text(' '.join(clues(engine,board)), size=(22, 2),  key='_clues_'),],
+		[sg.Text(' '.join(clues(engine,board)), size=(22, 2), key='_clues_', text_color='yellow')],
 		[sg.Text('Tio senaste dragen')],
 		[sg.Column([
 			makeRow(0, 3),
@@ -208,7 +209,12 @@ def PlayGame():
 		[sg.Button('Avsluta')]
 	]
 
-	row = [sg.Text('Material: 0', key='_material_'), sg.Text('Mobilitet: 20', key='_mobilitet_'), sg.Text('Utvärdering: 0', key='_evaluation_')]
+	row = [
+		sg.Text('Material: 0', key='_material_'),
+		sg.Text('Mobilitet: 20', key='_mobilitet_'),
+		sg.Text('Utvärdering: 0', key='_evaluation_'),
+		sg.Text('Vit drar', key='_vidDraget_', text_color = 'white'),
+	]
 	board_layout.append(row)
 
 	layout = [[ sg.Column(board_layout), sg.Column(board_controls)]]
@@ -221,7 +227,7 @@ def PlayGame():
 
 	while True:
 		if finalized and not board.is_game_over():
-			window['_clues_'].Update(' '.join(clues(engine, board)), text_color=['white','black'][len(stack)%2])
+			window['_clues_'].Update(' '.join(clues(engine, board)))
 
 		move_state = 0
 		while True:
@@ -243,6 +249,7 @@ def PlayGame():
 				window['_material_'].Update('Material: 0')
 				window['_mobilitet_'].Update('Mobilitet: 20')
 				window['_evaluation_'].Update('Utvärdering: 0')
+				window['_vidDraget_'].Update('Vit drar', text_color='white')
 
 				for i in range(20):
 					row = i // 2
@@ -264,6 +271,11 @@ def PlayGame():
 				stack.pop()
 				redraw_board(window,board)
 				showStack()
+				scorex = getScore(engine, board)
+				window['_material_'].Update('Material: ' + str(material(board)))
+				window['_mobilitet_'].Update('Mobilitet: ' + str(board.legal_moves.count()))
+				window['_evaluation_'].Update('Utvärdering: ' + str(scorex))
+				window['_vidDraget_'].Update(['Vit', 'Svart'][len(stack) % 2] + ' drar',text_color=['white', 'black'][len(stack) % 2])
 				break
 			if type(button) is tuple: # en av 64 rutor
 				if move_state == 0:
@@ -294,22 +306,23 @@ def PlayGame():
 
 					if picked_move in [str(move) for move in board.legal_moves]:
 						scorex = getScore(engine,board)
-						print(board.san(chess.Move.from_uci(picked_move)),scorex)
+						picked_san = board.san(chess.Move.from_uci(picked_move))
 
 						index = 999
-						for i in range(len(info)):
-							if str(info[i]['pv'][0]) == picked_move: index = i
+						for i in range(len(best_moves)):
+							if best_moves[i][1] == picked_san: index = i
 
-						if index < LOW: color = 'green'
-						elif LOW <= index <= HIGH: color = 'yellow'
+						if index+1 < LOW: color = 'green'
+						elif LOW <= index+1 <= HIGH: color = 'yellow'
 						else: color = 'red'
 
-						stack.append([board.san(chess.Move.from_uci(picked_move)), color])
+						stack.append([picked_san, color])
 						board.push(chess.Move.from_uci(picked_move))
 
 						window['_material_'].Update('Material: ' + str(material(board)))
 						window['_mobilitet_'].Update('Mobilitet: ' + str(board.legal_moves.count()))
 						window['_evaluation_'].Update('Utvärdering: ' + str(scorex))
+						window['_vidDraget_'].Update(['Vit', 'Svart'][len(stack) % 2] + ' drar', text_color=['white', 'black'][len(stack) % 2])
 					else:
 						move_state = 0
 						color = '#B58863' if (move_from[0] + move_from[1]) % 2 else '#F0D9B5'

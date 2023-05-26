@@ -28,15 +28,16 @@ Här anges vilken pjäs bonden ska förvandlas till.
 1 = Bästa draget
 2 = Näst bästa osv.
 
-* 0: Inga ledtrådar
-* 2:     1=Grönt 2  =Gult 3-=Rött
-* 3-4: 1-2=Grönt 3-4=Gult 5-=Rött
-* 4-6
-* 5-8
-
-Alternativet 3-4 innebär att man får reda på det tredje och fjärde bästa draget.
-1 och 2 är hemliga. Lyckas man hitta något av dem visas draget med grönt.
-Misslyckas man visas draget med rött.
+```
+0: Inga ledtrådar
+2:   🟢🟡🔴🔴🔴🔴🔴🔴🔴🔴
+3-4: 🟢🟢🟡🟡🔴🔴🔴🔴🔴🔴
+4-6: 🟢🟢🟢🟡🟡🟡🔴🔴🔴🔴
+5-8: 🟢🟢🟢🟢🟡🟡🟡🟡🔴🔴
+```
+* Alternativet 3-4 innebär att man får reda på det tredje och fjärde bästa draget.
+* Gröna är hemliga. Lyckas man hitta något av dem visas draget med grönt.
+* Misslyckas man visas draget med rött.
 
 # Material
 
