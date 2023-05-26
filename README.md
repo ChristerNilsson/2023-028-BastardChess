@@ -52,6 +52,7 @@ Här anges vilken pjäs bonden ska förvandlas till.
 # Historik
 
 * Här visas de tio senaste dragen. Färgerna visa dragets styrka.
+* Man kan scrolla ett steg genom att klicka på översta/nedersta draget.
 
 # Analys
 

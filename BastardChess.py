@@ -25,6 +25,7 @@ PROMO = 'Dam'
 finalized = False
 stack = [] # [san, green/yellow/red]
 mobility = []
+historyStart = 0
 
 info = []
 best_moves = []
@@ -66,10 +67,12 @@ def hor(a,b): return [sg.Column([[a,b]])]
 
 def makeRow(index,n):
 	res = []
-	sizes = [4,7,7]
 	for i in range(n):
 		s = str(index)+str(i)
-		cell = sg.Text('', key=s, size=sizes[i], background_color='black', p=(0,0))
+		if i == 0:
+			cell = sg.Button('', key=s, size=4, p=(0,0))
+		else:
+			cell = sg.Text('', key=s, size=7, background_color='black', p=(0,0))
 		res.append(cell)
 	return [sg.Column([res])]
 
@@ -107,11 +110,13 @@ def getScore(engine,board):
 
 def showStack():
 	n = min(len(stack),20)
-	start = len(stack) - n
-	if start % 2 == 1: start = start + 1
-	if start < 0: start = 0
+	# start = len(stack) - n # går mot stacken. historyStart går mot raderna.
+	# if start % 2 == 1: start = start + 1
+	# if start < 0: start = 0
 
-	for i in range(20):
+	start = historyStart * 2
+
+	for i in range(20): # rensa
 		row = i // 2
 		col = i % 2
 		window[str(row) + str(col + 0)].Update('')
@@ -121,7 +126,8 @@ def showStack():
 		row = i // 2
 		col = i % 2
 		if start+i < len(stack):
-			[san,color] = stack[start+i]
+			[san,color] = stack[start + i]
+			#if col==0: window[str(row) + str(col)].Update(start//2 + row + 1)  # nr
 			if col==0: window[str(row) + str(col)].Update(start//2 + row + 1)  # nr
 			window[str(row) + str(col+1)].Update(san, text_color=color)
 
@@ -140,7 +146,7 @@ def get_san(item): return item[1]
 
 
 def PlayGame():
-	global window, TIME, CLUE, PROMO, finalized, stack, best_moves
+	global window, TIME, CLUE, PROMO, finalized, stack, best_moves, historyStart
 
 	def clues(engine, board):
 		global info,LOW,HIGH,best_moves
@@ -231,6 +237,7 @@ def PlayGame():
 		move_state = 0
 		while True:
 			button, value = window.Read()
+			print(button)
 
 			TIME = value['_TIME_']
 			PROMO = value['_promo_']
@@ -269,6 +276,10 @@ def PlayGame():
 				board.pop()
 				stack.pop()
 				redraw_board(window,board)
+
+				historyStart = (len(stack) + 1) // 2 - 10
+				if historyStart < 0: historyStart = 0
+
 				showStack()
 				scorex = getScore(engine, board)
 				window['_material_'].Update('Material: ' + str(material(board)))
@@ -276,6 +287,14 @@ def PlayGame():
 				window['_evaluation_'].Update('Utvärdering: ' + str(scorex))
 				window['_vidDraget_'].Update(['Vit', 'Svart'][len(stack) % 2] + ' drar',text_color=['white', 'black'][len(stack) % 2])
 				break
+			if button == '00':
+				if historyStart > 0: historyStart -= 1
+				print("B00",historyStart)
+				showStack()
+			if button == '90':
+				if historyStart < len(stack)//2 - 10: historyStart += 1
+				print("B90",historyStart)
+				showStack()
 			if type(button) is tuple: # en av 64 rutor
 				if move_state == 0:
 					move_from = button
@@ -317,6 +336,9 @@ def PlayGame():
 
 						stack.append([picked_san, color])
 						board.push(chess.Move.from_uci(picked_move))
+
+						historyStart = (len(stack)+1)//2 - 10
+						if historyStart < 0: historyStart = 0
 
 						window['_material_'].Update('Material: ' + str(material(board)))
 						window['_mobilitet_'].Update('Mobilitet: ' + str(board.legal_moves.count()))
