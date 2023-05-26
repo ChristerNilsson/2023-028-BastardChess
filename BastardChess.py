@@ -17,7 +17,7 @@ LOW = 3
 HIGH = 4
 
 TIMES = [1,2,5,10,20,50,100,200,500] # milliseconds
-TIME = 10 # thinking time
+TIME = 20 # thinking time
 
 PROMOS = 'Dam Torn Löpare Springare'.split(' ')
 PROMO = 'Dam'
@@ -149,7 +149,6 @@ def PlayGame():
 		if HIGH == 0: return []
 		info = engine.analyse(board, chess.engine.Limit(time=TIME / 1000), multipv=HIGH)
 		n = len(info)
-		print([item['time'] for item in info])
 
 		best_moves = [[score(item),board.san(item['pv'][0])] for item in info]
 		best_moves.sort(key=get_score)

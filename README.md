@@ -17,7 +17,8 @@
 
 # Millisekunder
 
-Här anger man hur mycket tid som används för att utvärdera dragen.
+Här anger man hur mycket tid som används för att utvärdera dragen.  
+20 millisekunder per drag räcker utmärkt för att vinna över Hikaru-bot (2840) på chess.com  
 
 # Promovering
 
