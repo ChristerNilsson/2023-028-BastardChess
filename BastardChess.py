@@ -16,7 +16,7 @@ CLUE = "3-4" # green:1-2 yellow:3-4 red:5-
 LOW = 3
 HIGH = 4
 
-TIMES = [1,2,5,10,20,50,100,200,500] # milliseconds
+TIMES = [1,2,5,10,20,50,100,200,500,1000,2000,5000] # milliseconds
 TIME = 20 # thinking time
 
 PROMOS = 'Dam Torn Löpare Springare'.split(' ')
@@ -72,9 +72,9 @@ def makeRow(index,n):
 		if i == 0:
 			cell = sg.Button('', key=s, size=4, p=(0,0))
 		else:
-			cell = sg.Text('', key=s, size=7, background_color='black', p=(0,0))
+			cell = sg.Text('', key=s, size=7, background_color='black', p=(0,0), justification='center')
 		res.append(cell)
-	return [sg.Column([res])]
+	return [sg.Column([res], background_color='black')]
 
 def makeHistory():
 	pgn = []
@@ -110,10 +110,6 @@ def getScore(engine,board):
 
 def showStack():
 	n = min(len(stack),20)
-	# start = len(stack) - n # går mot stacken. historyStart går mot raderna.
-	# if start % 2 == 1: start = start + 1
-	# if start < 0: start = 0
-
 	start = historyStart * 2
 
 	for i in range(20): # rensa
@@ -127,8 +123,7 @@ def showStack():
 		col = i % 2
 		if start+i < len(stack):
 			[san,color] = stack[start + i]
-			#if col==0: window[str(row) + str(col)].Update(start//2 + row + 1)  # nr
-			if col==0: window[str(row) + str(col)].Update(start//2 + row + 1)  # nr
+			if col==0: window[str(row) + str(col)].Update(historyStart + row + 1)  # nr
 			window[str(row) + str(col+1)].Update(san, text_color=color)
 
 def score(info):
@@ -237,7 +232,7 @@ def PlayGame():
 		move_state = 0
 		while True:
 			button, value = window.Read()
-			print(button)
+			#print(button)
 
 			TIME = value['_TIME_']
 			PROMO = value['_promo_']
