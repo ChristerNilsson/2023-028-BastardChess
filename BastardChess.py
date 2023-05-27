@@ -162,8 +162,8 @@ def PlayGame():
 		global info,LOW,HIGH,best_moves
 		info = engine.analyse(board, chess.engine.Limit(time=TIME / 1000), multipv=HIGH)
 		n = len(info)
-
-		best_moves = [[score(item),board.san(item['pv'][0])] for item in info]
+		if n==0: return ''
+		best_moves = [[score(item), board.san(item['pv'][0])] for item in info if len(item)>5]
 		if len(stack)%2==1:
 			best_moves.sort(key=get_white_score)
 		else:
@@ -184,15 +184,19 @@ def PlayGame():
 
 	b = [row.split(' ') for row in str(initial_board).split("\n")]
 	board_layout = []
-	row = [sg.Text('', key='_upperHint_', text_color = 'yellow', size=50, justification='center')]
+	row = [sg.Text('', key='_upperHint_', text_color = 'yellow', size=55, justification='center')]
 	board_layout.append(row)
 
 	for i in range(8):
-		row = []
+		row = [sg.Text(8-i)]
 		for j in range(8):
 			piece_image = './images/' + images[b[i][j]] + '.png'
 			row.append(render_square(piece_image, key=(i, j), location=(i, j)))
 		board_layout.append(row)
+	row = [sg.Text(' ',p=7)]
+	for j in range(8):
+		row.append(sg.Text("abcdefgh"[j], size=5, p=7, justification='center'))
+	board_layout.append(row)
 
 	engine = chess.engine.SimpleEngine.popen_uci(ENGINE)
 	board = chess.Board()
@@ -232,7 +236,7 @@ def PlayGame():
 		hor6(q0,q1,q2,r1,r2,r3),
 	]
 
-	row = [sg.Text(clues(engine,board), key='_lowerHint_', text_color = 'yellow', size=50, justification='center')]
+	row = [sg.Text(clues(engine,board), key='_lowerHint_', text_color = 'yellow', size=55, justification='center')]
 	board_layout.append(row)
 
 	layout = [[ sg.Column(board_layout), sg.Column(board_controls)]]
@@ -328,18 +332,18 @@ def PlayGame():
 						picked_move += {'Queen':'q','Rook':'r','Bishop':'b','Knight':'n'}[PROMO]
 
 					if picked_move in [str(move) for move in board.legal_moves]:
-						scorex = getScore(engine,board)
 						picked_san = board.san(chess.Move.from_uci(picked_move))
 						board.push(chess.Move.from_uci(picked_move))
+						scorex = getScore(engine,board)
 						stack.append([picked_san,scorex] + [move[1] for move in best_moves])
+						print(picked_san,scorex)
 
-						historyStart = (len(stack)) - N
+						historyStart = len(stack) - N
 						if historyStart < 0: historyStart = 0
 
 						window['_material_'].Update(str(material(board)))
-
 						showHints()
-
+						makeHistory()
 					else:
 						move_state = 0
 						color = '#B58863' if (move_from[0] + move_from[1]) % 2 else '#F0D9B5'
