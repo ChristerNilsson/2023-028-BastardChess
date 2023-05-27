@@ -16,10 +16,10 @@ LOW = 3
 HIGH = 4
 
 TIMES = [1,2,5,10,20,50,100,200,500,1000,2000,5000] # milliseconds
-TIME = 20 # thinking time
+TIME = 200 # thinking time
 
-PROMOS = 'Dam Torn Löpare Springare'.split(' ')
-PROMO = 'Dam'
+PROMOS = 'Queen Rook Bishop Knight'.split(' ')
+PROMO = 'Queen'
 
 finalized = False
 stack = [] # [[san,score,1,2,3,4]]
@@ -127,7 +127,11 @@ def showStack():
 				if item[0] == item[k + 2]: index = k # 0 to 3. 4 if red
 
 			color = ['green', 'green', 'yellow', 'yellow', 'red'][index]
-			window[str(i) + '1'].Update(item[0], text_color=color)
+			if (historyStart+i)%2==0:
+				window[str(i) + '1'].Update(item[0]+'   •', text_color=color)
+			else:
+				window[str(i) + '1'].Update('•   '+item[0], text_color=color)
+
 			window[str(i) + '2'].Update(item[1])
 
 			for j in range(len(item)-2):
@@ -146,7 +150,8 @@ def score(info):
 		score = 10000 - value.mate() * factor
 	return score
 
-def get_score(item): return -item[0]
+def get_white_score(item): return item[0]
+def get_black_score(item): return -item[0]
 def get_san(item): return item[1]
 
 
@@ -159,11 +164,23 @@ def PlayGame():
 		n = len(info)
 
 		best_moves = [[score(item),board.san(item['pv'][0])] for item in info]
-		best_moves.sort(key=get_score)
+		if len(stack)%2==1:
+			best_moves.sort(key=get_white_score)
+		else:
+			best_moves.sort(key=get_black_score)
 		print(' '.join([move[1] for move in best_moves]), ' '.join([str(move[0]) for move in best_moves]))
 		yellow_moves = best_moves[LOW-1:n]
 		yellow_moves.sort(key=get_san)
 		return '       '.join([move[1] for move in yellow_moves])
+
+	def showHints():
+		xx = clues(engine, board)
+		if len(stack) % 2 == 1:
+			window['_upperHint_'].Update(xx)
+			window['_lowerHint_'].Update('')
+		else:
+			window['_upperHint_'].Update('')
+			window['_lowerHint_'].Update(xx)
 
 	b = [row.split(' ') for row in str(initial_board).split("\n")]
 	board_layout = []
@@ -180,22 +197,23 @@ def PlayGame():
 	engine = chess.engine.SimpleEngine.popen_uci(ENGINE)
 	board = chess.Board()
 
-	d = sg.Text('Millisekunder:')
+	d = sg.Text('Time:')
 	e = sg.Combo(TIMES, size=(5, 10), readonly=True, default_value=TIME, key='_TIME_')
+	f = sg.Text('ms')
 
-	p1 = sg.Text('Promovering:')
+	p1 = sg.Text('               Promovation:')
 	p2 = sg.Combo(PROMOS, size=(8, 10), readonly=True, default_value=PROMO, key='_promo_')
 
 	q0 = sg.Text('0', key='_material_')
-	q1 = sg.Button('Hjälp')
-	q2 = sg.Button('Ångra')
+	q1 = sg.Button('Help')
+	q2 = sg.Button('Undo')
 
-	r1 = sg.Button('Analys')
-	r2 = sg.Button('Nytt parti')
-	r3 = sg.Button('Avsluta')
+	r1 = sg.Button('Analyze')
+	r2 = sg.Button('New')
+	r3 = sg.Button('Close')
 
 	board_controls = [
-		hor4(d,e,p1,p2),
+		hor5(d,e,f,p1,p2),
 		[sg.Column([
 			makeRow(0, 7),
 			makeRow(1, 7),
@@ -219,7 +237,7 @@ def PlayGame():
 
 	layout = [[ sg.Column(board_layout), sg.Column(board_controls)]]
 
-	window = sg.Window('Bastardschack',
+	window = sg.Window('Bastard Chess',
 	default_button_element_size=(8, 1),
 	auto_size_buttons=False,
 	font='Arial 16',
@@ -237,11 +255,11 @@ def PlayGame():
 			PROMO = value['_promo_']
 
 			if button in (None, 'Exit'): exit()
-			if button == 'Avsluta':
+			if button == 'Close':
 				engine.quit()
 				window.Close()
 				return
-			if button == 'Nytt parti':
+			if button == 'New':
 				board = chess.Board()
 				stack = []
 				window['_material_'].Update('0')
@@ -251,14 +269,16 @@ def PlayGame():
 						window[str(i) + str(j)].Update('')
 
 				redraw_board(window,board)
-			if button == 'Hjälp':
+				showHints()
+
+			if button == 'Help':
 				subprocess.Popen([BROWSER ,HELP])
 				break
-			if button == 'Analys':
+			if button == 'Analyze':
 				makeHistory()
 				subprocess.Popen([BROWSER ,"https:\\lichess.org\paste"])
 				break
-			if button == 'Ångra':
+			if button == 'Undo':
 				if len(stack) == 0: break
 				board.pop()
 				stack.pop()
@@ -268,6 +288,8 @@ def PlayGame():
 				if historyStart < 0: historyStart = 0
 
 				showStack()
+				showHints()
+
 				window['_material_'].Update(str(material(board)))
 				break
 			if button == '00':
@@ -303,27 +325,20 @@ def PlayGame():
 													'abcdefgh'[move_to[1]], 8 - move_to[0])
 
 					if (piece == 'P' and 8 - move_to[0] == 8) or (piece == 'p' and 8 - move_to[0] == 1):
-						picked_move += {'Dam':'q','Torn':'r','Löpare':'b','Springare':'n'}[PROMO]
+						picked_move += {'Queen':'q','Rook':'r','Bishop':'b','Knight':'n'}[PROMO]
 
 					if picked_move in [str(move) for move in board.legal_moves]:
 						scorex = getScore(engine,board)
 						picked_san = board.san(chess.Move.from_uci(picked_move))
-
-						stack.append([picked_san,scorex] + [move[1] for move in best_moves])
 						board.push(chess.Move.from_uci(picked_move))
+						stack.append([picked_san,scorex] + [move[1] for move in best_moves])
 
 						historyStart = (len(stack)) - N
 						if historyStart < 0: historyStart = 0
 
 						window['_material_'].Update(str(material(board)))
 
-						xx = clues(engine, board)
-						if len(stack) % 2 == 1:
-							window['_upperHint_'].Update(xx)
-							window['_lowerHint_'].Update('')
-						else:
-							window['_upperHint_'].Update('')
-							window['_lowerHint_'].Update(xx)
+						showHints()
 
 					else:
 						move_state = 0
