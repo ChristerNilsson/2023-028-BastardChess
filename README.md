@@ -38,10 +38,6 @@ Här anges vilken pjäs bonden ska förvandlas till.
 * Baserat på pjäsernas värde (1,3,5,9).
 * Beräknas som Vit minus Svart.
 
-# Mobilitet
-
-* Antal drag som aktuell spelare kan utföra.
-
 # Historik
 
 * Här visas de senaste dragen. Färgerna visa dragets styrka.
