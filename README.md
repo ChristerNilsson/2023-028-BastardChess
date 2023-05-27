@@ -26,17 +26,10 @@ Här anges vilken pjäs bonden ska förvandlas till.
 
 # Ledtrådar
 
-1 = Bästa draget
-2 = Näst bästa osv.
-
 ```
-0: Inga ledtrådar
-2:   🟢🟡🔴🔴🔴🔴🔴🔴🔴🔴
-3-4: 🟢🟢🟡🟡🔴🔴🔴🔴🔴🔴
-4-6: 🟢🟢🟢🟡🟡🟡🔴🔴🔴🔴
-5-8: 🟢🟢🟢🟢🟡🟡🟡🟡🔴🔴
+🟢🟢🟡🟡🔴🔴🔴🔴🔴🔴
 ```
-* Alternativet 3-4 innebär att man får reda på det tredje och fjärde bästa draget.
+* Man får reda på det tredje och fjärde bästa draget.
 * Gröna är hemliga. Lyckas man hitta något av dem visas draget med grönt.
 * Misslyckas man visas draget med rött.
 
@@ -51,8 +44,8 @@ Här anges vilken pjäs bonden ska förvandlas till.
 
 # Historik
 
-* Här visas de tio senaste dragen. Färgerna visa dragets styrka.
-* Man kan scrolla ett steg genom att klicka på översta/nedersta draget.
+* Här visas de senaste dragen. Färgerna visa dragets styrka.
+* Man kan scrolla genom att klicka på översta/nedersta draget.
 
 # Analys
 
