@@ -29,7 +29,7 @@ Här anges vilken pjäs bonden ska förvandlas till.
 ```
 🟢🟢🟡🟡🔴🔴🔴🔴🔴🔴
 ```
-* Man får reda på det tredje och fjärde bästa draget.
+* Man får veta det tredje och fjärde bästa draget.
 * Gröna är hemliga. Lyckas man hitta något av dem visas draget med grönt.
 * Misslyckas man visas draget med rött.
 
@@ -37,11 +37,16 @@ Här anges vilken pjäs bonden ska förvandlas till.
 
 * Baserat på pjäsernas värde (1,3,5,9).
 * Beräknas som Vit minus Svart.
+* Visas till vänster om Hjälpknappen.
 
 # Historik
 
 * Här visas de senaste dragen. Färgerna visa dragets styrka.
 * Man kan scrolla genom att klicka på översta/nedersta draget.
+* I första kolumnen visas aktuellt halvdrag.
+* I andra kolumnen visas draget
+* I tredje kolumnen visas utvärdering.
+* Därefter visas de fyra bästa dragen i fallande styrkeordning.
 
 # Analys
 

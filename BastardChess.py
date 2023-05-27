@@ -125,7 +125,6 @@ def showStack():
 			index = 4
 			for k in range(len(item)-2):
 				if item[0] == item[k + 2]: index = k # 0 to 3. 4 if red
-			print(index)
 
 			color = ['green', 'green', 'yellow', 'yellow', 'red'][index]
 			window[str(i) + '1'].Update(item[0], text_color=color)
@@ -161,10 +160,10 @@ def PlayGame():
 
 		best_moves = [[score(item),board.san(item['pv'][0])] for item in info]
 		best_moves.sort(key=get_score)
-		print(best_moves)
+		print(' '.join([move[1] for move in best_moves]), ' '.join([str(move[0]) for move in best_moves]))
 		yellow_moves = best_moves[LOW-1:n]
 		yellow_moves.sort(key=get_san)
-		return [move[1] for move in yellow_moves]
+		return '       '.join([move[1] for move in yellow_moves])
 
 	b = [row.split(' ') for row in str(initial_board).split("\n")]
 	board_layout = []
@@ -197,7 +196,6 @@ def PlayGame():
 
 	board_controls = [
 		hor4(d,e,p1,p2),
-		# [sg.Text(' '.join(clues(engine,board)), size=(22, 1), key='_clues_', text_color='yellow')],
 		[sg.Column([
 			makeRow(0, 7),
 			makeRow(1, 7),
@@ -216,8 +214,7 @@ def PlayGame():
 		hor6(q0,q1,q2,r1,r2,r3),
 	]
 
-
-	row = [sg.Text('', key='_lowerHint_', text_color = 'yellow', size=50, justification='center')]
+	row = [sg.Text(clues(engine,board), key='_lowerHint_', text_color = 'yellow', size=50, justification='center')]
 	board_layout.append(row)
 
 	layout = [[ sg.Column(board_layout), sg.Column(board_controls)]]
@@ -231,7 +228,6 @@ def PlayGame():
 	while True:
 		if finalized and not board.is_game_over():
 			pass
-		# window['_clues_'].Update(' '.join(clues(engine, board)))
 
 		move_state = 0
 		while True:
@@ -248,9 +244,7 @@ def PlayGame():
 			if button == 'Nytt parti':
 				board = chess.Board()
 				stack = []
-				# window['_clues_'].Update(' '.join(clues(engine,board)))
 				window['_material_'].Update('0')
-				# window['_vidDraget_'].Update('Vit drar', text_color='white')
 
 				for i in range(N):
 					for j in range(7):
@@ -274,17 +268,15 @@ def PlayGame():
 				if historyStart < 0: historyStart = 0
 
 				showStack()
-				# scorex = getScore(engine, board)
 				window['_material_'].Update(str(material(board)))
-				#window['_vidDraget_'].Update(['Vit', 'Svart'][len(stack) % 2] + ' drar',text_color=['white', 'black'][len(stack) % 2])
 				break
 			if button == '00':
 				if historyStart > 0: historyStart -= 1
 				print("B00",historyStart)
 				showStack()
-			if button == '90':
+			if button == '110':
 				if historyStart < len(stack) - N: historyStart += 1
-				print("B90",historyStart)
+				print("B110",historyStart)
 				showStack()
 			if type(button) is tuple: # en av 64 rutor
 				if move_state == 0:
@@ -325,7 +317,7 @@ def PlayGame():
 
 						window['_material_'].Update(str(material(board)))
 
-						xx = '      '.join(clues(engine, board))
+						xx = clues(engine, board)
 						if len(stack) % 2 == 1:
 							window['_upperHint_'].Update(xx)
 							window['_lowerHint_'].Update('')
