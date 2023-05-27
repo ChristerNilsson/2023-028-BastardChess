@@ -201,7 +201,7 @@ def PlayGame():
 	e = sg.Combo(TIMES, size=(5, 10), readonly=True, default_value=TIME, key='_TIME_')
 	f = sg.Text('ms')
 
-	p1 = sg.Text('               Promovation:')
+	p1 = sg.Text('                           Promotion:')
 	p2 = sg.Combo(PROMOS, size=(8, 10), readonly=True, default_value=PROMO, key='_promo_')
 
 	q0 = sg.Text('0', key='_material_')
